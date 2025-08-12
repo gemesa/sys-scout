@@ -11,6 +11,14 @@ use aya_ebpf::{
 use aya_log_ebpf::info;
 use lsm_file_open_common::Buffer;
 
+#[allow(
+    non_camel_case_types,
+    non_upper_case_globals,
+    non_snake_case,
+    dead_code,
+    unnecessary_transmutes,
+    improper_ctypes_definitions
+)]
 mod vmlinux;
 
 #[map]
