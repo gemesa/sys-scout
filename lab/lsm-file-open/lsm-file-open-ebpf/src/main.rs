@@ -1,14 +1,14 @@
 #![no_std]
 #![no_main]
 
+use aya_ebpf::helpers::bpf_d_path;
 use aya_ebpf::{
     bindings::path,
     macros::{lsm, map},
-    programs::LsmContext,
     maps::RingBuf,
+    programs::LsmContext,
 };
 use aya_log_ebpf::info;
-use aya_ebpf::helpers::bpf_d_path;
 use lsm_file_open_common::Buffer;
 
 mod vmlinux;
@@ -32,7 +32,11 @@ fn try_file_open(ctx: LsmContext) {
             let ptr = event.as_mut_ptr();
             unsafe {
                 core::ptr::write_bytes((*ptr).data.as_mut_ptr(), 0, (*ptr).data.len());
-                let ret = bpf_d_path(path, (*ptr).data.as_mut_ptr() as *mut i8, (*ptr).data.len() as u32);
+                let ret = bpf_d_path(
+                    path,
+                    (*ptr).data.as_mut_ptr() as *mut i8,
+                    (*ptr).data.len() as u32,
+                );
                 if ret < 0 {
                     event.discard(0);
                     return;
@@ -40,7 +44,7 @@ fn try_file_open(ctx: LsmContext) {
                 (*ptr).len = ret as usize;
             }
             event.submit(0);
-        },
+        }
         None => {
             info!(&ctx, "Cannot reserve space in ring buffer.");
         }
