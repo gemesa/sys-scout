@@ -52,6 +52,8 @@ async fn main() -> Result<(), anyhow::Error> {
             let buf: &Buffer = unsafe { &*(item.as_ptr() as *const Buffer) };
             if let Ok(str) = std::str::from_utf8(&buf.data[..buf.len]) {
                 if str == "/etc/passwd\0" {
+                    //let username = get_username(buf.uid);
+                    //info!("/etc/passwd opened, pid: {}, uid: {}, user: {}", buf.pid, buf.uid, username);
                     info!("/etc/passwd opened, pid: {}, uid: {}", buf.pid, buf.uid);
                 }
             }
@@ -65,4 +67,22 @@ async fn main() -> Result<(), anyhow::Error> {
     // info!("Exiting...");
 
     // Ok(())
+}
+
+fn _get_username(uid: u32) -> String {
+    unsafe {
+        let passwd = libc::getpwuid(uid);
+        if passwd.is_null() {
+            return "unknown".to_string();
+        }
+        let name_ptr = (*passwd).pw_name;
+        if name_ptr.is_null() {
+            return "unknown".to_string();
+        }
+        let name_cstr = std::ffi::CStr::from_ptr(name_ptr);
+        match name_cstr.to_str() {
+            Ok(name) => name.to_string(),
+            Err(_) => "unknown".to_string(),
+        }
+    }
 }
