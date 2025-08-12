@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use aya_ebpf::helpers::bpf_d_path;
+use aya_ebpf::helpers::{bpf_d_path, bpf_get_current_pid_tgid, bpf_get_current_uid_gid};
 use aya_ebpf::{
     bindings::path,
     macros::{lsm, map},
@@ -50,6 +50,12 @@ fn try_file_open(ctx: LsmContext) {
                     return;
                 }
                 (*ptr).len = ret as usize;
+                let pid_tgid = bpf_get_current_pid_tgid();
+                (*ptr).pid = (pid_tgid >> 32) as u32;
+
+                let uid_gid = bpf_get_current_uid_gid();
+                (*ptr).uid = uid_gid as u32;
+
             }
             event.submit(0);
         }

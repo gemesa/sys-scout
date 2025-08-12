@@ -52,7 +52,7 @@ async fn main() -> Result<(), anyhow::Error> {
             let buf: &Buffer = unsafe { &*(item.as_ptr() as *const Buffer) };
             if let Ok(str) = std::str::from_utf8(&buf.data[..buf.len]) {
                 if str == "/etc/passwd\0" {
-                    info!("/etc/passwd opened");
+                    info!("/etc/passwd opened, pid: {}, uid: {}", buf.pid, buf.uid);
                 }
             }
             else {
