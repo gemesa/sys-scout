@@ -18,13 +18,11 @@ static RING_BUF: RingBuf = RingBuf::with_byte_size(4096u32, 0);
 
 #[lsm(hook = "file_open")]
 pub fn file_open(ctx: LsmContext) -> i32 {
-    match try_file_open(ctx) {
-        Ok(ret) => ret,
-        Err(ret) => ret,
-    }
+    try_file_open(ctx);
+    0
 }
 
-fn try_file_open(ctx: LsmContext) -> Result<i32, i32> {
+fn try_file_open(ctx: LsmContext) {
     let file: *const vmlinux::file = unsafe { ctx.arg(0) };
 
     let path = unsafe { &(*file).f_path as *const _ as *mut path };
@@ -37,7 +35,7 @@ fn try_file_open(ctx: LsmContext) -> Result<i32, i32> {
                 let ret = bpf_d_path(path, (*ptr).data.as_mut_ptr() as *mut i8, (*ptr).data.len() as u32);
                 if ret < 0 {
                     event.discard(0);
-                    return Err(ret as i32);
+                    return;
                 }
                 (*ptr).len = ret as usize;
             }
@@ -46,9 +44,7 @@ fn try_file_open(ctx: LsmContext) -> Result<i32, i32> {
         None => {
             info!(&ctx, "Cannot reserve space in ring buffer.");
         }
-    }    
-
-    Ok(0)
+    }
 }
 
 #[panic_handler]
