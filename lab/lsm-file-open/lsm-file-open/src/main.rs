@@ -1,8 +1,11 @@
-use aya::{programs::Lsm, Btf};
-use aya::{include_bytes_aligned, Bpf};
 use aya::maps::RingBuf;
+use aya::{include_bytes_aligned, Bpf};
+use aya::{programs::Lsm, Btf};
 use aya_log::BpfLogger;
-use log::{info, warn, debug};
+use log::{debug, info, warn};
+use std::collections::HashMap;
+use std::fs;
+use std::io;
 // use tokio::signal;
 
 use lsm_file_open_common::Buffer;
@@ -40,6 +43,7 @@ async fn main() -> Result<(), anyhow::Error> {
     }
     let btf = Btf::from_sys_fs()?;
     let program: &mut Lsm = bpf.program_mut("file_open").unwrap().try_into()?;
+    let users = get_users().unwrap();
     program.load("file_open", &btf)?;
     program.attach()?;
 
@@ -51,13 +55,16 @@ async fn main() -> Result<(), anyhow::Error> {
         if let Some(item) = ring.next() {
             let buf: &Buffer = unsafe { &*(item.as_ptr() as *const Buffer) };
             if let Ok(str) = std::str::from_utf8(&buf.data[..buf.len]) {
-                if str == "/etc/passwd\0" {
-                    //let username = get_username(buf.uid);
-                    //info!("/etc/passwd opened, pid: {}, uid: {}, user: {}", buf.pid, buf.uid, username);
-                    info!("/etc/passwd opened, pid: {}, uid: {}", buf.pid, buf.uid);
+                if str == "/etc/passwd\0" || str == "/etc/shadow\0" || str == "/etc/hosts\0" {
+                    info!(
+                        "{} opened, pid: {}, uid: {}, user: {}",
+                        str,
+                        buf.pid,
+                        buf.uid,
+                        users.get(&buf.uid).unwrap()
+                    );
                 }
-            }
-            else {
+            } else {
                 info!("invalid utf8");
             }
         }
@@ -69,20 +76,16 @@ async fn main() -> Result<(), anyhow::Error> {
     // Ok(())
 }
 
-fn _get_username(uid: u32) -> String {
-    unsafe {
-        let passwd = libc::getpwuid(uid);
-        if passwd.is_null() {
-            return "unknown".to_string();
-        }
-        let name_ptr = (*passwd).pw_name;
-        if name_ptr.is_null() {
-            return "unknown".to_string();
-        }
-        let name_cstr = std::ffi::CStr::from_ptr(name_ptr);
-        match name_cstr.to_str() {
-            Ok(name) => name.to_string(),
-            Err(_) => "unknown".to_string(),
+fn get_users() -> io::Result<HashMap<u32, String>> {
+    let mut users = HashMap::new();
+    let contents = fs::read_to_string("/etc/passwd")?;
+    for line in contents.lines() {
+        let fields: Vec<&str> = line.split(':').collect();
+        if fields.len() >= 3 {
+            let username = fields[0].to_string();
+            let uid = fields[2].parse::<u32>().unwrap();
+            users.insert(uid, username);
         }
     }
+    Ok(users)
 }
