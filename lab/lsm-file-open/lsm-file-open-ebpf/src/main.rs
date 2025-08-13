@@ -24,7 +24,7 @@ use lsm_file_open_common::Buffer;
 mod vmlinux;
 
 #[map]
-static RING_BUF: RingBuf = RingBuf::with_byte_size(4096u32, 0);
+static RING_BUF: RingBuf = RingBuf::with_byte_size(1024*1024, 0);
 
 #[lsm(hook = "file_open")]
 pub fn file_open(ctx: LsmContext) -> i32 {
