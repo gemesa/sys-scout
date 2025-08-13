@@ -1,7 +1,9 @@
 #![no_std]
 #![no_main]
 
-use aya_ebpf::helpers::{bpf_d_path, bpf_get_current_pid_tgid, bpf_get_current_uid_gid};
+use aya_ebpf::helpers::{
+    bpf_d_path, bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid,
+};
 use aya_ebpf::{
     bindings::path,
     macros::{lsm, map},
@@ -56,6 +58,13 @@ fn try_file_open(ctx: LsmContext) {
                 let uid_gid = bpf_get_current_uid_gid();
                 (*ptr).uid = uid_gid as u32;
 
+                let comm = bpf_get_current_comm();
+                match comm {
+                    Ok(comm) => {
+                        core::ptr::copy_nonoverlapping(comm.as_ptr(), (*ptr).comm.as_mut_ptr(), 16)
+                    }
+                    Err(_) => core::ptr::write_bytes((*ptr).comm.as_mut_ptr(), 0, 16),
+                }
             }
             event.submit(0);
         }

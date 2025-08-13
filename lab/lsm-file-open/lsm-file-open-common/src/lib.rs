@@ -7,4 +7,5 @@ pub struct Buffer {
     pub data: [u8; 200],
     pub pid: u32,
     pub uid: u32,
+    pub comm: [u8; 16],
 }

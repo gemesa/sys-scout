@@ -57,9 +57,10 @@ async fn main() -> Result<(), anyhow::Error> {
             if let Ok(str) = std::str::from_utf8(&buf.data[..buf.len]) {
                 if str == "/etc/passwd\0" || str == "/etc/shadow\0" || str == "/etc/hosts\0" {
                     info!(
-                        "{} opened, pid: {}, uid: {}, user: {}",
+                        "{} opened, pid: {}, process: {}, uid: {}, user: {}",
                         str,
                         buf.pid,
+                        String::from_utf8_lossy(&buf.comm).trim_end_matches('\0'),
                         buf.uid,
                         users.get(&buf.uid).unwrap()
                     );
