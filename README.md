@@ -4,6 +4,8 @@ A guide with examples for analyzing malware dynamically using eBPF.
 
 ## Prerequisites
 
+### Fedora
+
 ```
 $ sudo dnf install -y bcc bcc-tools bcc-devel python3-bcc bpftrace reptyr
 $ cargo install cargo-generate
