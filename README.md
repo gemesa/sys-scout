@@ -8,6 +8,11 @@ A guide with examples for analyzing malware dynamically using eBPF.
 
 ```
 $ sudo dnf install -y bcc bcc-tools bcc-devel python3-bcc bpftrace reptyr
+$ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+$ rustup install stable
+$ rustup toolchain install nightly --component rust-src
+$ cargo install cargo-binstall --locked
+$ cargo binstall bpf-linker
 $ cargo install cargo-generate
 $ cargo install bindgen-cli
 $ cargo install --git https://github.com/aya-rs/aya -- aya-tool
